@@ -1,16 +1,24 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
-import Navbar from './components/Navbar.jsx'
-import Searchbar from './components/Searchbar.jsx'
+import "./App.css";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import Navbar from "./components/Navbar.jsx";
+import Searchbar from "./components/Searchbar.jsx";
+import Books from "./components/Books.jsx";
+import Liked from "./components/Liked.jsx";
+import Wanttoread from "./components/Wanttoread.jsx";
 
 function App() {
-  return(
-    <>
+  return (
+    <BrowserRouter>
       <Navbar />
-      <Searchbar />
-    </>
-  )}
-export default App
+      <Routes>
+        <Route path="/" element={<Searchbar />} />
+        <Route path="/profile" element={<Books />} />
+        <Route path="/liked" element={<Liked />} />
+        <Route path="/want-to-read" element={<Wanttoread />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </BrowserRouter>
+  );
+}
+
+export default App;

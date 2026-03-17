@@ -24,7 +24,7 @@ const Searchbar = () => {
     }
   };
 
-  const handleSave = async (book) => {
+  const handleSave = async (book, category = 'savedBooks') => {
     const user = auth.currentUser;
 
     if (!user) {
@@ -33,8 +33,8 @@ const Searchbar = () => {
     }
 
     try {
-      await saveBookToFirebase(book);
-      alert("Saved!");
+      await saveBookToFirebase(book, category);
+      alert(`Saved to ${category === 'savedBooks' ? 'Saved Books' : category === 'likedBooks' ? 'Liked Books' : 'Want to Read'}!`);
     } catch (err) {
       console.error(err);
       setError("Failed to save the book. Please try again.");
@@ -81,8 +81,14 @@ const Searchbar = () => {
                 onError={(e) => e.target.style.display = 'none'}
               />
             )}
-            <button onClick={() => handleSave(book)}>
+            <button onClick={() => handleSave(book, 'savedBooks')}>
               Save Book
+            </button>
+            <button onClick={() => handleSave(book, 'likedBooks')} style={{ marginLeft: '8px' }}>
+              ❤️ Like
+            </button>
+            <button onClick={() => handleSave(book, 'wantToRead')} style={{ marginLeft: '8px' }}>
+              📖 Want to Read
             </button>
           </div>
         ))}
