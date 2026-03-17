@@ -2,14 +2,7 @@ import { initializeApp } from "firebase/app";
 import { getAuth, signInAnonymously, onAuthStateChanged } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
-const firebaseConfig = {
-  apiKey: "AIzaSyCC1otuJW0JE1i6iJu4ITVx_w3DDNlNSXQ",
-  authDomain: "dreads-515e8.firebaseapp.com",
-  projectId: "dreads-515e8",
-  storageBucket: "dreads-515e8.firebasestorage.app",
-  messagingSenderId: "1044081879327",
-  appId: "1:1044081879327:web:d6f97e0b10d98fa919e82a"
-};
+firebase config
 
 const app = initializeApp(firebaseConfig);
 
