@@ -8,108 +8,6 @@ import {
   updateBookComment,
 } from "../services.js/firebaseservice";
 
-const Section = ({ title, items, onRemove, onMoveToLiked, onMoveToSaved, onMoveToWantToRead }) => (
-  <section style={{ marginBottom: 32 }}>
-    <h2 style={{ marginBottom: 12 }}>{title}</h2>
-
-    {items.length === 0 ? (
-      <p style={{ fontStyle: "italic", color: "#666" }}>
-        Nothing here yet.
-      </p>
-    ) : (
-      <div style={{ display: "grid", gap: 12, gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))" }}>
-        {items.map((book) => (
-          <div
-            key={book.id}
-            style={{
-              border: "1px solid #ddd",
-              borderRadius: 10,
-              padding: 12,
-              background: "#fff",
-              boxShadow: "0 2px 6px rgba(0,0,0,.06)",
-            }}
-          >
-            {book.thumbnail && (
-              <img
-                src={book.thumbnail}
-                alt={book.title}
-                style={{ width: "100%", height: 220, objectFit: "cover", borderRadius: 8 }}
-              />
-            )}
-            <h3 style={{ margin: "12px 0 6px" }}>{book.title}</h3>
-            <p style={{ margin: 0, color: "#444" }}>
-              {book.authors?.length ? book.authors.join(", ") : "Unknown author"}
-            </p>
-            <div style={{ marginTop: 12, display: "flex", gap: 8, flexWrap: "wrap" }}>
-              {onMoveToLiked && (
-                <button
-                  onClick={() => onMoveToLiked(book.id)}
-                  style={{
-                    padding: "6px 10px",
-                    borderRadius: 6,
-                    border: "1px solid #ccc",
-                    background: "#fff",
-                    cursor: "pointer",
-                    fontSize: "12px",
-                  }}
-                >
-                  ❤️ Like
-                </button>
-              )}
-              {onMoveToSaved && (
-                <button
-                  onClick={() => onMoveToSaved(book.id)}
-                  style={{
-                    padding: "6px 10px",
-                    borderRadius: 6,
-                    border: "1px solid #ccc",
-                    background: "#fff",
-                    cursor: "pointer",
-                    fontSize: "12px",
-                  }}
-                >
-                  📚 Save
-                </button>
-              )}
-              {onMoveToWantToRead && (
-                <button
-                  onClick={() => onMoveToWantToRead(book.id)}
-                  style={{
-                    padding: "6px 10px",
-                    borderRadius: 6,
-                    border: "1px solid #ccc",
-                    background: "#fff",
-                    cursor: "pointer",
-                    fontSize: "12px",
-                  }}
-                >
-                  📖 Want to Read
-                </button>
-              )}
-              {onRemove && (
-                <button
-                  onClick={() => onRemove(book.id)}
-                  style={{
-                    padding: "6px 10px",
-                    borderRadius: 6,
-                    border: "1px solid red",
-                    background: "#fff",
-                    color: "red",
-                    cursor: "pointer",
-                    fontSize: "12px",
-                  }}
-                >
-                  Remove
-                </button>
-              )}
-            </div>
-          </div>
-        ))}
-      </div>
-    )}
-  </section>
-);
-
 const Books = () => {
   const [savedBooks, setSavedBooks] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -176,7 +74,7 @@ const Books = () => {
   };
 
   if (loading) {
-    return <p style={{ padding: 24 }}>Loading your library…</p>;
+    return <p style={{ padding: 24 }}>Loading your books…</p>;
   }
 
   return (
