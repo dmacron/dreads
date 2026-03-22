@@ -3,30 +3,29 @@ import { collection, doc, getDocs, setDoc, deleteDoc } from "firebase/firestore"
 
 export const saveBookToFirebase = async (book, collectionName = 'savedBooks') => {
   const user = auth.currentUser;
+  if (!user) throw new Error("User not logged in");
 
-  if (!user) {
-    throw new Error("User not logged in");
-  }
+  const bookId = book.id;
+  const info = book.volumeInfo || book; // Handle both direct API items and existing FB items
 
-  // For likedBooks and wantToRead, don't remove from other collections
-  // Only remove duplicates when saving to savedBooks
-  if (collectionName === 'savedBooks') {
-    const collections = ['likedBooks', 'wantToRead'];
-    const removePromises = collections
-      .filter(col => col !== collectionName)
-      .map(col => deleteDoc(doc(db, "users", user.uid, col, book.id)).catch(() => {})); // Ignore errors if doc doesn't exist
-    await Promise.all(removePromises);
-  }
+  // Normalize structure for consistent cross-app usage
+  const normalizedData = {
+    id: bookId,
+    title: info.title,
+    authors: info.authors || [],
+    thumbnail: (info.imageLinks?.thumbnail || info.thumbnail || "").replace('http:', 'https:'),
+    categories: info.categories || [],
+    description: info.description || "",
+    comment: book.comment || "",
+  };
 
-  await setDoc(
-    doc(db, "users", user.uid, collectionName, book.id),
-    {
-      title: book.volumeInfo.title,
-      authors: book.volumeInfo.authors || [],
-      thumbnail: book.volumeInfo.imageLinks?.thumbnail || "",
-      comment: "",
-    }
-  );
+  // Compatibility wrapper for components expecting .volumeInfo
+  const finalDoc = {
+    ...normalizedData,
+    volumeInfo: { ...normalizedData }
+  };
+
+  await setDoc(doc(db, "users", user.uid, collectionName, bookId), finalDoc);
 };
 
 export const getBooksFromCollection = async (userId, collectionName) => {

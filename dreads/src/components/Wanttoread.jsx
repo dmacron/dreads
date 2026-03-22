@@ -1,19 +1,31 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { auth } from "../firebase/firebase";
+import { Star, CheckCircle2 } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 import {
   getBooksFromCollection,
-  removeBookFromCollection,
-  saveBookToFirebase,
   updateBookComment,
+  saveBookToFirebase
 } from "../services.js/firebaseservice";
+import { getRecommendations } from "../services.js/bookservice";
+import CircularGallery from "./CircularGallery";
+import BookModal from "./BookModal";
 
 const Wanttoread = () => {
-  const [wantToReadBooks, setWantToReadBooks] = useState([]);
+  const [wantBooks, setWantBooks] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [selectedBook, setSelectedBook] = useState(null);
+  const [recommendations, setRecommendations] = useState([]);
+  const [recLoading, setRecLoading] = useState(false);
+  const [toast, setToast] = useState({ message: '', visible: false });
 
   const navigate = useNavigate();
+
+  const showToast = (message) => {
+    setToast({ message, visible: true });
+    setTimeout(() => setToast({ message: '', visible: false }), 3000);
+  };
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
@@ -21,172 +33,114 @@ const Wanttoread = () => {
         navigate("/");
         return;
       }
-
-      setLoading(true);
-      setError("");
-
       try {
+        setLoading(true);
         const want = await getBooksFromCollection(user.uid, "wantToRead");
-        setWantToReadBooks(want);
+        setWantBooks(want);
       } catch (err) {
-        console.error(err);
-        setError("Unable to load want to read books. Please try again.");
+        console.error("Load failed", err);
       } finally {
         setLoading(false);
       }
     });
-
     return () => unsubscribe();
   }, [navigate]);
 
-  const handleRemove = async (bookId) => {
-    try {
-      await removeBookFromCollection(auth.currentUser.uid, "wantToRead", bookId);
-      setWantToReadBooks((prev) => prev.filter((b) => b.id !== bookId));
-    } catch (err) {
-      console.error(err);
-      setError("Could not remove the book. Try again.");
+  const handleAction = async (book, category) => {
+    if (category === 'view') {
+      setSelectedBook(book);
+      setRecommendations([]);
+      return;
     }
-  };
-
-  const handleLike = async (book) => {
     try {
-      await saveBookToFirebase(book, "likedBooks");
-      // Don't remove from wantToRead - book stays in both
+      const dbCollection = category === 'Liked' ? 'likedBooks' : 'wantToRead';
+      await saveBookToFirebase(book, dbCollection);
+      showToast(`Added to ${category}! 🌸`);
     } catch (err) {
-      console.error(err);
-      setError("Could not like the book. Try again.");
-    }
-  };
-
-  const handleSave = async (book) => {
-    try {
-      await saveBookToFirebase(book, "savedBooks");
-      // This will remove from wantToRead since saveBookToFirebase removes from other collections when saving to savedBooks
-      setWantToReadBooks((prev) => prev.filter((b) => b.id !== book.id));
-    } catch (err) {
-      console.error(err);
-      setError("Could not save the book. Try again.");
+      showToast("Operation failed.");
     }
   };
 
   const handleCommentChange = async (bookId, comment) => {
     try {
       await updateBookComment("wantToRead", bookId, comment);
-      setWantToReadBooks((prev) =>
-        prev.map((book) =>
-          book.id === bookId ? { ...book, comment } : book
-        )
-      );
+      setWantBooks(prev => prev.map(b => b.id === bookId ? { ...b, comment } : b));
     } catch (err) {
-      console.error(err);
-      setError("Could not save comment. Try again.");
+      console.error("Comment update failed", err);
+    }
+  };
+
+  const handleRecommend = async (book) => {
+    try {
+      setRecLoading(true);
+      const results = await getRecommendations(book);
+      setRecommendations(results);
+    } catch (err) {
+      showToast("Failed to fetch suggestions.");
+    } finally {
+      setRecLoading(false);
+    }
+  };
+
+  const handleRemove = async (bookId) => {
+    try {
+      await removeBookFromCollection(auth.currentUser.uid, "wantToRead", bookId);
+      setWantBooks((prev) => prev.filter((b) => b.id !== bookId));
+      setSelectedBook(null);
+      showToast("Removed from collection 🍃");
+    } catch (err) {
+      showToast("Failed to remove book.");
     }
   };
 
   if (loading) {
-    return <p style={{ padding: 24 }}>Loading your want to read books…</p>;
+    return (
+      <div className="h-full flex justify-center items-center">
+        <div className="w-16 h-16 border-4 border-pink-400 rounded-full animate-spin border-t-transparent" />
+      </div>
+    );
   }
 
   return (
-    <main style={{ padding: 24, maxWidth: 1200, margin: "0 auto" }}>
-      <h1>📖 Want to Read</h1>
-      {error && (
-        <div style={{ color: "#b00", marginBottom: 20 }}>{error}</div>
-      )}
+    <div className="h-full flex flex-col pt-4 overflow-hidden">
+      <AnimatePresence>
+        {toast.visible && (
+          <motion.div initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }} className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[2000] bg-white/90 px-6 py-3 rounded-full shadow-xl border-2 border-pink-200 flex items-center gap-2 text-pink-600 font-bold">
+            <CheckCircle2 className="w-5 h-5" /> {toast.message}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-      {wantToReadBooks.length === 0 ? (
-        <p style={{ fontStyle: "italic", color: "#666" }}>
-          No books in your want to read list yet. Search for books and click the 📖 Want to Read button!
-        </p>
-      ) : (
-        <div style={{ display: "grid", gap: 12, gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))" }}>
-          {wantToReadBooks.map((book) => (
-            <div
-              key={book.id}
-              style={{
-                border: "1px solid #ddd",
-                borderRadius: 10,
-                padding: 12,
-                background: "#fff",
-                boxShadow: "0 2px 6px rgba(0,0,0,.06)",
-              }}
-            >
-              {book.thumbnail && (
-                <img
-                  src={book.thumbnail}
-                  alt={book.title}
-                  style={{ width: "100%", height: 220, objectFit: "cover", borderRadius: 8 }}
-                />
-              )}
-              <h3 style={{ margin: "12px 0 6px" }}>{book.title}</h3>
-              <p style={{ margin: 0, color: "#444" }}>
-                {book.authors?.length ? book.authors.join(", ") : "Unknown author"}
-              </p>
+      <div className="max-w-6xl mx-auto w-full flex-1 flex flex-col justify-start">
+        <h2 className="text-3xl font-pixel text-pink-500 mb-2 px-4 flex items-center gap-3">
+          <Star className="w-8 h-8 fill-amber-400 text-amber-500" /> Want to Read
+        </h2>
+        
+        {wantBooks.length === 0 ? (
+          <div className="flex-1 flex flex-col items-center justify-center text-slate-500 font-pixel text-sm">List is empty. 📖</div>
+        ) : (
+          <div className="flex-1 min-h-0">
+            <CircularGallery 
+              items={wantBooks}
+              onSave={handleAction}
+              onBookClick={(b) => { setSelectedBook(b); setRecommendations([]); }}
+            />
+          </div>
+        )}
+      </div>
 
-              <textarea
-                placeholder="Add a comment..."
-                value={book.comment || ""}
-                onChange={(e) => handleCommentChange(book.id, e.target.value)}
-                style={{
-                  width: "100%",
-                  marginTop: 12,
-                  padding: 8,
-                  borderRadius: 6,
-                  border: "1px solid #ccc",
-                  fontSize: "12px",
-                  resize: "vertical",
-                  minHeight: 40,
-                }}
-              />
-
-              <div style={{ marginTop: 12, display: "flex", gap: 8, flexWrap: "wrap" }}>
-                <button
-                  onClick={() => handleLike(book)}
-                  style={{
-                    padding: "6px 10px",
-                    borderRadius: 6,
-                    border: "1px solid #ccc",
-                    background: "#fff",
-                    cursor: "pointer",
-                    fontSize: "12px",
-                  }}
-                >
-                  ❤️ Like
-                </button>
-                <button
-                  onClick={() => handleSave(book)}
-                  style={{
-                    padding: "6px 10px",
-                    borderRadius: 6,
-                    border: "1px solid #ccc",
-                    background: "#fff",
-                    cursor: "pointer",
-                    fontSize: "12px",
-                  }}
-                >
-                  📚 Save
-                </button>
-                <button
-                  onClick={() => handleRemove(book.id)}
-                  style={{
-                    padding: "6px 10px",
-                    borderRadius: 6,
-                    border: "1px solid red",
-                    background: "#fff",
-                    color: "red",
-                    cursor: "pointer",
-                    fontSize: "12px",
-                  }}
-                >
-                  Remove
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </main>
+      <BookModal 
+        book={selectedBook}
+        isOpen={!!selectedBook}
+        onClose={() => setSelectedBook(null)}
+        onAction={handleAction}
+        onDelete={handleRemove}
+        onCommentChange={handleCommentChange}
+        onRecommend={handleRecommend}
+        recommendations={recommendations}
+        recLoading={recLoading}
+      />
+    </div>
   );
 };
 
