@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ChevronLeft, ChevronRight, Heart, Star, BookOpen } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { useTheme } from '../context/ThemeContext';
 
 const CircularGallery = ({ items, onSave, onBookClick }) => {
+  const { theme, currentTheme } = useTheme();
   const [currentIndex, setCurrentIndex] = useState(0);
 
   useEffect(() => {
@@ -41,7 +43,7 @@ const CircularGallery = ({ items, onSave, onBookClick }) => {
 
   return (
     <div 
-      className="relative w-full h-[55vh] flex items-center justify-center overflow-visible"
+      className={`relative w-full h-[55vh] flex items-center justify-center overflow-visible ${theme.font}`}
       onWheel={(e) => {
         const now = Date.now();
         if (now - lastScroll.current < 400) return;
@@ -53,7 +55,7 @@ const CircularGallery = ({ items, onSave, onBookClick }) => {
     >
       <button 
         onClick={prev} 
-        className="absolute left-[-15px] sm:left-2 z-40 p-3 bg-white/70 backdrop-blur-md rounded-full shadow-lg text-pink-500 hover:bg-white hover:scale-105 transition-all border border-pink-100"
+        className={`absolute left-[-15px] sm:left-2 z-40 p-3 ${theme.modalBg} backdrop-blur-md rounded-full shadow-lg ${theme.iconColor} hover:scale-105 transition-all border ${theme.divider}`}
       >
         <ChevronLeft className="w-6 h-6" />
       </button>
@@ -85,7 +87,7 @@ const CircularGallery = ({ items, onSave, onBookClick }) => {
                 whileHover={isActive ? { 
                   scale: scale * 1.05, 
                   y: -10,
-                  boxShadow: "0 0 25px rgba(244, 114, 182, 0.4)", // Pastel Pink Glow
+                  boxShadow: currentTheme === 'pink' ? "0 0 25px rgba(244, 114, 182, 0.4)" : "0 0 25px rgba(0, 0, 0, 0.2)",
                   transition: { type: "spring", stiffness: 400, damping: 10 }
                 } : {}}
                 whileTap={{ scale: scale * 0.95, rotateZ: isActive ? -1 : 0 }}
@@ -93,9 +95,9 @@ const CircularGallery = ({ items, onSave, onBookClick }) => {
                 className={`absolute w-60 sm:w-64 h-full ${isActive ? 'cursor-default' : 'cursor-pointer'} rounded-[2rem]`}
                 onClick={() => { if (!isActive) setCurrentIndex(index); }}
               >
-                <div className={`w-full h-full bg-white/95 backdrop-blur-md rounded-[2rem] p-5 shadow-xl border-2 flex flex-col transition-all duration-300 ${isActive ? 'border-pink-300 shadow-pink-200/40' : 'border-white/50 shadow-black/5'}`}>
+                <div className={`w-full h-full ${theme.modalBg} backdrop-blur-md rounded-[2rem] p-5 shadow-xl border-2 flex flex-col transition-all duration-300 ${isActive ? `${theme.borderClass} shadow-lg` : 'border-white/50 shadow-black/5'}`}>
                   <div 
-                    className="relative w-full h-[68%] rounded-2xl overflow-hidden shadow-inner bg-slate-50 mb-4 cursor-pointer group flex items-center justify-center"
+                    className={`relative w-full h-[68%] rounded-2xl overflow-hidden shadow-inner bg-slate-50/50 mb-4 cursor-pointer group flex items-center justify-center`}
                     onClick={() => isActive && onBookClick(rawBook)}
                   >
                     <img 
@@ -106,7 +108,7 @@ const CircularGallery = ({ items, onSave, onBookClick }) => {
                     />
                     {isActive && (
                       <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-[1px]">
-                        <span className="bg-white/90 text-pink-600 px-4 py-2 rounded-full font-bold text-[8px] tracking-widest uppercase">
+                        <span className={`bg-white/90 ${theme.accentText} px-4 py-2 rounded-full font-bold text-[8px] tracking-widest uppercase`}>
                            View Details
                         </span>
                       </div>
@@ -114,13 +116,13 @@ const CircularGallery = ({ items, onSave, onBookClick }) => {
                   </div>
                   
                   <div className="flex-1 flex flex-col text-center overflow-hidden">
-                    <h3 className="font-bold text-slate-800 truncate mb-1 text-xs">{book.title}</h3>
+                    <h3 className={`font-bold ${theme.primaryText} truncate mb-1 text-xs`}>{book.title}</h3>
                     <p className="text-[9px] text-slate-500 truncate mb-3 font-medium uppercase tracking-wider">{book.authors.join(', ')}</p>
                     
                     <div className="mt-auto flex items-center justify-center gap-2 mb-1">
                       <button 
                         onClick={(e) => { e.stopPropagation(); onSave(rawBook, 'Liked'); }}
-                        className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-slate-50 text-slate-500 hover:text-rose-500 hover:bg-rose-50 transition-all border border-slate-100"
+                        className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl ${theme.cardBg} ${theme.primaryText} hover:${theme.accentText} transition-all border ${theme.divider}`}
                         title="Like"
                       >
                         <Heart className="w-3.5 h-3.5" />
@@ -128,7 +130,7 @@ const CircularGallery = ({ items, onSave, onBookClick }) => {
                       </button>
                       <button 
                         onClick={(e) => { e.stopPropagation(); onSave(rawBook, 'Want to Read'); }}
-                        className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-slate-50 text-slate-500 hover:text-amber-500 hover:bg-amber-50 transition-all border border-slate-100"
+                        className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl ${theme.cardBg} ${theme.primaryText} hover:text-amber-500 transition-all border ${theme.divider}`}
                         title="Want to Read"
                       >
                         <Star className="w-3.5 h-3.5" />
@@ -145,7 +147,7 @@ const CircularGallery = ({ items, onSave, onBookClick }) => {
 
       <button 
         onClick={next} 
-        className="absolute right-[-15px] sm:right-2 z-40 p-3 bg-white/70 backdrop-blur-md rounded-full shadow-lg text-pink-500 hover:bg-white hover:scale-105 transition-all border border-pink-100"
+        className={`absolute right-[-15px] sm:right-2 z-40 p-3 ${theme.modalBg} backdrop-blur-md rounded-full shadow-lg ${theme.iconColor} hover:scale-105 transition-all border ${theme.divider}`}
       >
         <ChevronRight className="w-6 h-6" />
       </button>

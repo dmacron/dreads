@@ -22,4 +22,4 @@ dreads\src\firebase\firebase.js
 *.njsproj
 *.sln
 *.sw?
-.env
+dreads/env

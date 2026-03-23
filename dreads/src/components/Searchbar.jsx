@@ -6,8 +6,10 @@ import { saveBookToFirebase } from "../services.js/firebaseservice";
 import { auth } from "../firebase/firebase";
 import CircularGallery from "./CircularGallery";
 import BookModal from "./BookModal";
+import { useTheme } from "../context/ThemeContext";
 
 const Searchbar = () => {
+  const { theme, currentTheme } = useTheme();
   // --- States ---
   const [searchTerm, setSearchTerm] = useState("");
   const [searchType, setSearchType] = useState("intitle");
@@ -131,7 +133,7 @@ const Searchbar = () => {
     try {
       const dbCollection = category === 'Liked' ? 'likedBooks' : 'wantToRead';
       await saveBookToFirebase(book, dbCollection);
-      showToast(`Added to ${category}! 🌸`);
+      showToast(`Added to ${category}! ${currentTheme === 'pink' ? '🌸' : '✨'}`);
     } catch (err) {
       showToast("Failed to save book. 🍃");
     }
@@ -159,11 +161,16 @@ const Searchbar = () => {
   const currentType = searchTypes.find(t => t.id === searchType);
 
   return (
-    <div className="h-full flex flex-col justify-start">
+    <div className={`h-full flex flex-col justify-start ${theme.font}`}>
       <AnimatePresence>
         {toast.visible && (
-          <motion.div initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }} className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[2000] bg-white/90 backdrop-blur-md px-6 py-3 rounded-full shadow-xl border-2 border-pink-200 flex items-center gap-2 text-pink-600 font-bold">
-            <CheckCircle2 className="w-5 h-5" /> {toast.message}
+          <motion.div 
+            initial={{ opacity: 0, y: 50 }} 
+            animate={{ opacity: 1, y: 0 }} 
+            exit={{ opacity: 0, y: 20 }} 
+            className={`fixed bottom-8 left-1/2 -translate-x-1/2 z-[2000] ${theme.modalBg} backdrop-blur-md px-6 py-3 rounded-full shadow-xl border-2 ${theme.borderClass} flex items-center gap-2 ${theme.primaryText} font-bold`}
+          >
+            <CheckCircle2 className={`w-5 h-5 ${theme.iconColor}`} /> {toast.message}
           </motion.div>
         )}
       </AnimatePresence>
@@ -175,22 +182,22 @@ const Searchbar = () => {
               <button
                 type="button"
                 onClick={() => setShowTypeSelector(!showTypeSelector)}
-                className="flex items-center gap-2 px-4 py-2 bg-white/40 hover:bg-white/80 rounded-xl text-[10px] font-pixel text-slate-500 transition-all border border-white/50 shadow-sm"
+                className={`flex items-center gap-2 px-4 py-2 ${theme.typeSelector} rounded-xl text-[10px] uppercase tracking-widest transition-all border border-white/50 shadow-sm`}
               >
                 {currentType.icon}
-                <span className="hidden sm:inline uppercase tracking-widest">{currentType.label}</span>
+                <span className="hidden sm:inline">{currentType.label}</span>
                 <ChevronDown className={`w-3 h-3 transition-transform ${showTypeSelector ? 'rotate-180' : ''}`} />
               </button>
 
               <AnimatePresence>
                 {showTypeSelector && (
-                  <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="absolute top-full left-0 mt-2 bg-white rounded-2xl shadow-2xl border-2 border-pink-50 p-2 min-w-[140px] z-50">
+                  <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className={`absolute top-full left-0 mt-2 ${theme.modalBg} rounded-2xl shadow-2xl border-2 ${theme.divider} p-2 min-w-[140px] z-50`}>
                     {searchTypes.map((type) => (
                       <button
                         key={type.id}
                         type="button"
                         onClick={() => { setSearchType(type.id); setShowTypeSelector(false); }}
-                        className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-[9px] font-pixel uppercase tracking-widest transition-all ${searchType === type.id ? 'bg-pink-50 text-pink-600' : 'text-slate-500 hover:bg-slate-50'}`}
+                        className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-[9px] uppercase tracking-widest transition-all ${searchType === type.id ? `${theme.accentText} font-bold` : 'text-slate-500 hover:bg-slate-50'}`}
                       >
                         {type.icon} {type.label}
                       </button>
@@ -206,22 +213,22 @@ const Searchbar = () => {
               onFocus={() => searchTerm.length > 0 && setShowDropdown(true)}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder={`Search by ${currentType.label.toLowerCase()}...`}
-              className="w-full pl-36 sm:pl-44 pr-16 py-4 rounded-3xl border-4 border-white/50 bg-white/60 backdrop-blur-sm focus:outline-none focus:border-pink-400 focus:bg-white/90 transition-all text-lg shadow-xl"
+              className={`w-full pl-36 sm:pl-44 pr-16 py-4 rounded-3xl border-4 ${theme.borderClass} ${theme.cardBg} backdrop-blur-sm focus:outline-none focus:ring-4 focus:ring-white/20 transition-all text-lg shadow-xl ${theme.primaryText}`}
             />
-            <button type="submit" className="absolute right-3 p-3 bg-pink-400 text-white rounded-2xl hover:bg-pink-500 active:scale-95 shadow-sm transition-all">
+            <button type="submit" className={`absolute right-3 p-3 ${theme.buttonClass} rounded-2xl active:scale-95 shadow-sm transition-all flex items-center justify-center`}>
               <Search className="w-6 h-6" />
             </button>
           </form>
 
           <AnimatePresence>
             {showDropdown && (searchTerm.length > 0 || searchHistory.length > 0) && (
-              <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="absolute top-full left-0 right-0 mt-3 bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl border-4 border-pink-100 py-4 z-10">
+              <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className={`absolute top-full left-0 right-0 mt-3 ${theme.modalBg} backdrop-blur-xl rounded-3xl shadow-2xl border-4 ${theme.divider} py-4 z-10 font-bold`}>
                 {searchHistory.length > 0 && (
-                  <div className="px-6 mb-4 border-b border-pink-50 pb-4">
-                    <h4 className="flex items-center gap-2 text-[10px] uppercase font-pixel text-slate-400 mb-3 tracking-widest"><History className="w-3 h-3" /> Recent Searches</h4>
+                  <div className={`px-6 mb-4 border-b ${theme.divider} pb-4`}>
+                    <h4 className={`flex items-center gap-2 text-[10px] uppercase text-slate-400 mb-3 tracking-widest`}><History className="w-3 h-3" /> Recent Searches</h4>
                     <div className="flex flex-wrap gap-2">
                       {searchHistory.map((h, i) => (
-                        <button key={i} onClick={() => { setSearchTerm(h); handleSearch(h); }} className="px-4 py-1.5 bg-pink-50 text-pink-600 rounded-full text-xs font-bold hover:bg-pink-100 transition-colors">{h}</button>
+                        <button key={i} onClick={() => { setSearchTerm(h); handleSearch(h); }} className={`px-4 py-1.5 ${theme.historyItem} rounded-full text-xs transition-colors`}>{h}</button>
                       ))}
                     </div>
                   </div>
@@ -229,14 +236,14 @@ const Searchbar = () => {
                 <div className="px-2">
                    {suggestions.length > 0 ? (
                       suggestions.map((s) => (
-                        <button key={s.id} onClick={() => { setSearchTerm(s.volumeInfo.title); handleSearch(s.volumeInfo.title); }} className="w-full flex items-center gap-4 px-4 py-3 hover:bg-pink-50/50 rounded-2xl transition-colors text-left group">
-                          <BookOpen className="w-4 h-4 text-slate-300 group-hover:text-pink-400" />
-                          <span className="text-sm font-medium text-slate-600 truncate">{s.volumeInfo.title}</span>
+                        <button key={s.id} onClick={() => { setSearchTerm(s.volumeInfo.title); handleSearch(s.volumeInfo.title); }} className={`w-full flex items-center gap-4 px-4 py-3 ${theme.dropdownItem} rounded-2xl transition-colors text-left group`}>
+                          <BookOpen className={`w-4 h-4 text-slate-300 group-hover:${theme.iconColor}`} />
+                          <span className={`text-sm font-medium ${theme.primaryText} truncate`}>{s.volumeInfo.title}</span>
                           {s.volumeInfo.authors && <span className="text-[10px] text-slate-400 ml-auto shrink-0">{s.volumeInfo.authors[0]}</span>}
                         </button>
                       ))
                    ) : searchTerm.length > 2 && (
-                      <div className="text-center py-4 text-xs text-slate-400 font-pixel">Consulting the magic library...</div>
+                      <div className="text-center py-4 text-xs text-slate-400">Consulting the library...</div>
                    )}
                 </div>
               </motion.div>
@@ -247,8 +254,8 @@ const Searchbar = () => {
         {loading ? (
           <div className="flex-1 flex justify-center items-center">
             <div className="relative w-16 h-16">
-              <div className="absolute inset-0 border-4 border-pink-200 rounded-full animate-ping" />
-              <div className="absolute inset-2 border-4 border-pink-400 rounded-full animate-spin border-t-transparent" />
+              <div className={`absolute inset-0 border-4 ${theme.divider} rounded-full animate-ping`} />
+              <div className={`absolute inset-2 border-4 ${theme.iconColor} rounded-full animate-spin border-t-transparent`} />
             </div>
           </div>
         ) : (
@@ -258,19 +265,19 @@ const Searchbar = () => {
                 <CircularGallery items={books} onSave={handleAction} onBookClick={handleItemClick} />
               </div>
             ) : (
-              <div className="text-center py-20 text-slate-500 font-medium font-pixel text-sm">Try a magical search! 🪄</div>
+              <div className={`text-center py-20 ${theme.primaryText} font-medium text-sm`}>Try a search! {currentTheme === 'pink' ? '🪄' : '📚'}</div>
             )}
 
             {recentlyViewed.length > 0 && books.length > 0 && (
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-8 px-4 py-6 bg-white/30 backdrop-blur-md border-t-2 border-white/50 shrink-0">
-                <h3 className="font-pixel text-slate-400 text-[10px] mb-4 flex items-center gap-2 uppercase tracking-widest"><Clock className="w-3 h-3" /> Recently Viewed</h3>
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className={`mt-8 px-4 py-6 ${theme.cardBg} backdrop-blur-md border-t-2 ${theme.divider} shrink-0`}>
+                <h3 className={`text-slate-400 text-[10px] mb-4 flex items-center gap-2 uppercase tracking-widest`}><Clock className="w-3 h-3" /> Recently Viewed</h3>
                 <div className="flex gap-6 overflow-x-auto pb-4 scrollbar-hide">
                   {recentlyViewed.map((v) => (
                     <button key={v.id} onClick={() => handleItemClick(v)} className="flex-none w-20 flex flex-col gap-2 group">
-                      <div className="w-full aspect-[2/3] ring-2 ring-white/50 rounded-lg overflow-hidden shadow-lg group-hover:ring-pink-300 transition-all">
+                      <div className={`w-full aspect-[2/3] ring-2 ring-white/50 rounded-lg overflow-hidden shadow-lg group-hover:ring-${theme.accentText} transition-all`}>
                         <img src={v.volumeInfo?.imageLinks?.thumbnail?.replace('http:', 'https:') || v.thumbnail} className="w-full h-full object-cover" />
                       </div>
-                      <p className="text-[7px] font-pixel text-slate-500 truncate text-center uppercase">{v.volumeInfo?.title || v.title}</p>
+                      <p className={`text-[7px] text-slate-500 truncate text-center uppercase`}>{v.volumeInfo?.title || v.title}</p>
                     </button>
                   ))}
                 </div>
